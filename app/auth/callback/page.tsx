@@ -18,12 +18,16 @@ function CallbackInner() {
       // Ensure the OAuth code in the URL is exchanged for a session
       if (typeof window !== 'undefined') {
         try {
+          // Debug markers
+          console.log('[oauth] exchanging code for session...')
           await supabase.auth.exchangeCodeForSession(window.location.href)
+          console.log('[oauth] exchange attempted')
         } catch {
           // no-op; if already exchanged this will throw
         }
       }
       const { data } = await supabase.auth.getSession()
+      console.log('[oauth] session', !!data.session)
       if (data.session) {
         if (!active) return
         router.replace(desired)
