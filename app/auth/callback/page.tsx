@@ -2,9 +2,10 @@
 
 import * as React from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 import { createClient } from "@/lib/supabase/client"
 
-export default function OAuthCallback() {
+function CallbackInner() {
   const router = useRouter()
   const params = useSearchParams()
   const supabase = React.useMemo(() => createClient(), [])
@@ -17,9 +18,7 @@ export default function OAuthCallback() {
       // Ensure the OAuth code in the URL is exchanged for a session
       if (typeof window !== 'undefined') {
         try {
-          await supabase.auth.exchangeCodeForSession({
-            currentUrl: window.location.href,
-          })
+          await supabase.auth.exchangeCodeForSession(window.location.href)
         } catch {
           // no-op; if already exchanged this will throw
         }
@@ -47,5 +46,13 @@ export default function OAuthCallback() {
     <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">
       Completing sign-in…
     </div>
+  )
+}
+
+export default function OAuthCallback() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">Completing sign-in…</div>}>
+      <CallbackInner />
+    </Suspense>
   )
 }
