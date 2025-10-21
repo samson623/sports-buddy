@@ -47,7 +47,8 @@ export async function middleware(request: NextRequest) {
 
   const isPublicExplicit = PUBLIC_PATHS.includes(path)
   const isPublicPrefix = PUBLIC_PREFIXES.some((p) => path.startsWith(p))
-  const isProtected = PROTECTED_PREFIXES.length ? PROTECTED_PREFIXES.some((p) => path.startsWith(p)) : true
+  const REQUIRE_AUTH = process.env.NEXT_PUBLIC_REQUIRE_AUTH === 'true'
+  const isProtected = REQUIRE_AUTH && (PROTECTED_PREFIXES.length ? PROTECTED_PREFIXES.some((p) => path.startsWith(p)) : true)
 
   // Allow OAuth callback to complete (Supabase appends `code` and `state`).
   const isOAuthCallback = url.searchParams.has('code') && url.searchParams.has('state')
