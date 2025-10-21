@@ -1,7 +1,4 @@
 import { createClient as createServerClient } from '@/lib/supabase/server'
-// import { Database } from '@/types/database'
-
-// types imported for clarity if needed; unused suppress
 
 export type RoutedAnswer = {
   answer: string
@@ -13,19 +10,34 @@ const TIME_RE = /what\s+time\s+is\s+(.+?)\s+game\?/i
 const INJ_RE = /who\s+is\s+injured\s+on\s+(.+?)\?/i
 const ODDS_RE = /what\s+are\s+odds\s+for\s+(.+?)\?/i
 
+const TEAM_ALIASES: Record<string, string> = {
+  '49ers': 'San Francisco 49ers',
+  niners: 'San Francisco 49ers',
+  pats: 'New England Patriots',
+  'g-men': 'New York Giants',
+}
+
+function normalizeTeamName(name: string) {
+  const key = name.trim().toLowerCase()
+  return TEAM_ALIASES[key] || name
+}
+
 async function findTeamIdByName(team: string) {
+  const needle = normalizeTeamName(team)
   const supabase = await createServerClient()
+  // try full name contains
   const { data } = await supabase
     .from('teams')
     .select('id, abbreviation, full_name')
-    .ilike('full_name', `%${team}%`)
+    .ilike('full_name', `%${needle}%`)
     .limit(1)
     .maybeSingle()
   if (data?.id) return data.id
+  // try abbreviation contains
   const { data: abbr } = await supabase
     .from('teams')
     .select('id, abbreviation, full_name')
-    .ilike('abbreviation', `%${team}%`)
+    .ilike('abbreviation', `%${needle}%`)
     .limit(1)
     .maybeSingle()
   return abbr?.id || null
@@ -37,7 +49,7 @@ export async function routeQuestionToDB(q: string): Promise<RoutedAnswer | null>
   if (m) {
     const teamName = m[1].trim()
     const teamId = await findTeamIdByName(teamName)
-    if (!teamId) return { answer: `I couldn't find team "${teamName}".`, routed_to_db: true }
+    if (!teamId) return null
     const supabase = await createServerClient()
     const { data: rows } = await supabase
       .from('depth_chart')
@@ -47,7 +59,7 @@ export async function routeQuestionToDB(q: string): Promise<RoutedAnswer | null>
       .order('rank', { ascending: true })
       .limit(1)
     const starter = rows?.[0]?.players
-    if (!starter) return { answer: 'No QB starter found.', routed_to_db: true }
+    if (!starter) return null
     return { answer: `Starting QB: ${starter.first_name} ${starter.last_name}.`, routed_to_db: true }
   }
 
@@ -56,7 +68,7 @@ export async function routeQuestionToDB(q: string): Promise<RoutedAnswer | null>
   if (m) {
     const teamName = m[1].trim()
     const teamId = await findTeamIdByName(teamName)
-    if (!teamId) return { answer: `I couldn't find team "${teamName}".`, routed_to_db: true }
+    if (!teamId) return null
     const supabase = await createServerClient()
     const { data: game } = await supabase
       .from('games')
@@ -65,7 +77,7 @@ export async function routeQuestionToDB(q: string): Promise<RoutedAnswer | null>
       .order('kickoff_utc', { ascending: true })
       .limit(1)
       .maybeSingle()
-    if (!game?.kickoff_utc) return { answer: 'No upcoming game found.', routed_to_db: true }
+    if (!game?.kickoff_utc) return null
     const when = new Date(game.kickoff_utc).toLocaleString()
     return { answer: `Kickoff: ${when} (local time).`, routed_to_db: true }
   }
@@ -75,7 +87,7 @@ export async function routeQuestionToDB(q: string): Promise<RoutedAnswer | null>
   if (m) {
     const teamName = m[1].trim()
     const teamId = await findTeamIdByName(teamName)
-    if (!teamId) return { answer: `I couldn't find team "${teamName}".`, routed_to_db: true }
+    if (!teamId) return null
     const supabase = await createServerClient()
     const { data: rows } = await supabase
       .from('injuries')
@@ -84,7 +96,7 @@ export async function routeQuestionToDB(q: string): Promise<RoutedAnswer | null>
         (await supabase.from('players').select('id').eq('team_id', teamId)).data?.map((p) => p.id) || []
       ))
       .limit(10)
-    if (!rows?.length) return { answer: 'No reported injuries.', routed_to_db: true }
+    if (!rows?.length) return null
     const list = rows
       .map((r) => `${r.players?.first_name} ${r.players?.last_name}: ${r.injury_status || 'N/A'}${r.description ? ` – ${r.description}` : ''}`)
       .join('\n')
@@ -119,7 +131,7 @@ export async function routeQuestionToDB(q: string): Promise<RoutedAnswer | null>
         }
       }
     }
-    return { answer: 'No odds found.', routed_to_db: true }
+    return null
   }
 
   return null
