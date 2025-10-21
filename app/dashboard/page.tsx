@@ -9,9 +9,7 @@ import GameCard, { type AugmentedGame } from "@/components/GameCard"
 import { Skeleton } from "@/components/ui/skeleton"
 
 function getCurrentNFLWeek(date = new Date()) {
-  // Approximate: NFL regular season typically starts around early September (week 1)
-  const seasonStart = new Date(date.getFullYear(), 8, 1) // Sept 1
-  // Find first Sunday after Sept 1
+  const seasonStart = new Date(date.getFullYear(), 8, 1)
   const day = seasonStart.getDay()
   const diffToSunday = (7 - day) % 7
   const firstSunday = new Date(seasonStart)
@@ -25,7 +23,6 @@ function WeekSelector({ week, setWeek }: { week: number; setWeek: (w: number) =>
   const weeks = Array.from({ length: 18 }, (_, i) => i + 1)
   return (
     <div className="flex items-center justify-between gap-4">
-      {/* Mobile pills */}
       <div className="md:hidden overflow-x-auto">
         <div className="flex gap-2 py-2">
           {weeks.map((w) => (
@@ -41,18 +38,11 @@ function WeekSelector({ week, setWeek }: { week: number; setWeek: (w: number) =>
           ))}
         </div>
       </div>
-      {/* Desktop select */}
       <div className="hidden md:block">
         <label className="text-sm mr-2">Week</label>
-        <select
-          className="border rounded-md px-3 py-2"
-          value={week}
-          onChange={(e) => setWeek(Number(e.target.value))}
-        >
+        <select className="border rounded-md px-3 py-2" value={week} onChange={(e) => setWeek(Number(e.target.value))}>
           {weeks.map((w) => (
-            <option key={w} value={w}>
-              Week {w}
-            </option>
+            <option key={w} value={w}>Week {w}</option>
           ))}
         </select>
       </div>
@@ -69,12 +59,7 @@ function GamesGrid({ week }: { week: number }) {
     queryFn: async () => {
       const q = supabase
         .from("games")
-        .select(
-          `*,
-           home_team:teams!games_home_team_id_fkey(*),
-           away_team:teams!games_away_team_id_fkey(*),
-           odds:odds(*)`
-        )
+        .select(`*, home_team:teams!games_home_team_id_fkey(*), away_team:teams!games_away_team_id_fkey(*), odds:odds(*)`)
         .eq("season", year)
         .eq("week", week)
         .order("kickoff_utc", { ascending: true })
@@ -86,20 +71,12 @@ function GamesGrid({ week }: { week: number }) {
   })
 
   const grid = (
-    <div
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-    >
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {isLoading
-        ? Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-[120px] w-full" />
-          ))
+        ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-[120px] w-full" />)
         : data && data.length > 0
         ? data.map((g) => <GameCard key={g.id} game={g as unknown as AugmentedGame} />)
-        : (
-            <div className="col-span-full text-center text-gray-600 py-12">
-              No games scheduled for this week
-            </div>
-          )}
+        : <div className="col-span-full text-center text-gray-600 py-12">No games scheduled for this week</div>}
     </div>
   )
 
