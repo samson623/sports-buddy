@@ -52,7 +52,10 @@ export default function LoginPage() {
     setError(null)
     try {
       const redirect = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('redirect') || '/') : '/'
-      const redirectTo = typeof window !== "undefined" ? `${window.location.origin}${redirect}` : undefined
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('postAuthRedirect', redirect)
+      }
+      const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}` : undefined
       await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo } })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Google sign-in failed')
