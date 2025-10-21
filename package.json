@@ -10,6 +10,7 @@
     "configure:supabase": "node scripts/setup-supabase-env.mjs"
   },
   "dependencies": {
+    "@radix-ui/react-tabs": "^1.1.13",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.75.1",
     "@tanstack/react-query": "^5.90.5",
@@ -25,6 +26,7 @@
     "react-dom": "^18",
     "react-markdown": "^10.1.0",
     "react-pull-to-refresh": "^2.0.1",
+    "react-swipeable": "^7.0.2",
     "sonner": "^2.0.7",
     "stripe": "^19.1.0",
     "tailwind-merge": "^3.3.1",
