@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Menu } from "lucide-react"
+import ThemeToggle from "@/components/ThemeToggle"
 
 export function Header() {
   const [open, setOpen] = useState(false)
@@ -17,7 +18,8 @@ export function Header() {
             <Link href="/pricing" className="hover:text-black">Pricing</Link>
           </nav>
         </div>
-        <div className="hidden lg:flex items-center">
+        <div className="hidden lg:flex items-center gap-3">
+          <ThemeToggle />
           <Link href="/profile" className="text-sm">Account</Link>
         </div>
         <button className="md:hidden p-2" onClick={() => setOpen((v) => !v)} aria-label="Menu">

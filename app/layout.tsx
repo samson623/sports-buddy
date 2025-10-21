@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
+import ThemeProvider from "@/components/ThemeProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Sidebar from "@/components/desktop/Sidebar";
@@ -39,7 +40,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
           <Header />
           <Sidebar />
           <main className="min-h-screen lg:pl-64">
@@ -48,7 +50,8 @@ export default function RootLayout({
           <Footer />
           <BottomNav />
           <Toaster position="top-center" richColors />
-        </AuthProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
