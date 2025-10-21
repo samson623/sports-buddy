@@ -12,7 +12,7 @@ export function Header() {
         <div className="flex items-center gap-3">
           <Link href="/" className="font-semibold">Sports Buddy</Link>
           <nav className="hidden md:flex items-center gap-4 text-sm text-gray-700">
-            <Link href="/dashboard" className="hover:text-black">Schedule</Link>
+            <Link href="/" className="hover:text-black">Schedule</Link>
             <Link href="/teams" className="hover:text-black">Teams</Link>
             <Link href="/pricing" className="hover:text-black">Pricing</Link>
           </nav>
@@ -27,7 +27,7 @@ export function Header() {
       {open && (
         <nav className="md:hidden border-t">
           <div className="px-4 py-2 flex flex-col">
-            <Link href="/dashboard" className="py-2">Schedule</Link>
+            <Link href="/" className="py-2">Schedule</Link>
             <Link href="/teams" className="py-2">Teams</Link>
             <Link href="/pricing" className="py-2">Pricing</Link>
           </div>

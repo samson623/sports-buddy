@@ -3,8 +3,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { Database } from '@/types/database'
 
 const PUBLIC_PATHS = ['/', '/pricing']
-const PUBLIC_PREFIXES = ['/games/', '/teams/', '/legal/', '/login', '/signup', '/forgot-password']
-const PROTECTED_PREFIXES = ['/dashboard', '/profile', '/admin']
+const PUBLIC_PREFIXES = ['/games/', '/teams/', '/legal/', '/login', '/signup', '/forgot-password', '/dashboard']
+const PROTECTED_PREFIXES = ['/profile', '/admin']
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
