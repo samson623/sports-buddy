@@ -18,7 +18,7 @@ export default function LoginPage() {
   // If we already have a session (e.g., after Google OAuth redirect), go to target
   React.useEffect(() => {
     let active = true
-    const to = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('redirect') || '/dashboard') : '/dashboard'
+    const to = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('redirect') || '/') : '/'
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return
       if (data.session) router.replace(to)
@@ -39,7 +39,7 @@ export default function LoginPage() {
     try {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
       if (signInError) throw signInError
-      router.replace("/dashboard")
+      router.replace("/")
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to log in')
     } finally {
@@ -51,7 +51,7 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     try {
-      const redirect = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('redirect') || '/dashboard') : '/dashboard'
+      const redirect = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('redirect') || '/') : '/'
       const redirectTo = typeof window !== "undefined" ? `${window.location.origin}${redirect}` : undefined
       await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo } })
     } catch (err: unknown) {
