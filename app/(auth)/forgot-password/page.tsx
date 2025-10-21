@@ -23,8 +23,8 @@ export default function ForgotPasswordPage() {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
       if (resetError) throw resetError
       setMessage("If an account exists for this email, a reset link was sent.")
-    } catch (err: any) {
-      setError(err?.message ?? "Failed to send reset link")
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send reset link')
     } finally {
       setLoading(false)
     }
