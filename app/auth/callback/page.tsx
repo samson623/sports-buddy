@@ -14,6 +14,16 @@ export default function OAuthCallback() {
     const desired = params.get("redirect") || (typeof window !== "undefined" ? window.localStorage.getItem("postAuthRedirect") || "/" : "/")
 
     const proceed = async () => {
+      // Ensure the OAuth code in the URL is exchanged for a session
+      if (typeof window !== 'undefined') {
+        try {
+          await supabase.auth.exchangeCodeForSession({
+            currentUrl: window.location.href,
+          })
+        } catch {
+          // no-op; if already exchanged this will throw
+        }
+      }
       const { data } = await supabase.auth.getSession()
       if (data.session) {
         if (!active) return
