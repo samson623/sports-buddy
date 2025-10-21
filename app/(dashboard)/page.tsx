@@ -4,7 +4,7 @@ import * as React from "react"
 import PullToRefresh from "react-pull-to-refresh"
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
-import GameCard from "@/components/GameCard"
+import GameCard, { type AugmentedGame } from "@/components/GameCard"
 import { Skeleton } from "@/components/ui/skeleton"
 
 function getCurrentNFLWeek(date = new Date()) {
@@ -93,7 +93,7 @@ function GamesGrid({ week }: { week: number }) {
             <Skeleton key={i} className="h-[120px] w-full" />
           ))
         : data && data.length > 0
-        ? data.map((g) => <GameCard key={g.id} game={g as any} />)
+        ? data.map((g) => <GameCard key={g.id} game={g as unknown as AugmentedGame} />)
         : (
             <div className="col-span-full text-center text-gray-600 py-12">
               No games scheduled for this week

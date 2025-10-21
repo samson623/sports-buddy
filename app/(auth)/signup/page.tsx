@@ -34,8 +34,8 @@ export default function SignupPage() {
       }
 
       router.replace("/dashboard")
-    } catch (err: any) {
-      setError(err?.message ?? "Failed to sign up")
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to sign up')
     } finally {
       setLoading(false)
     }
@@ -47,8 +47,8 @@ export default function SignupPage() {
     try {
       const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/dashboard` : undefined
       await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo } })
-    } catch (err: any) {
-      setError(err?.message ?? "Google sign-in failed")
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Google sign-in failed')
       setLoading(false)
     }
   }

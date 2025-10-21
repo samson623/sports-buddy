@@ -1,18 +1,18 @@
 import Link from "next/link"
 import type { Game, Team, Odds } from "@/types/database"
 
-type Props = {
-  game: Game & {
-    home_team?: Team | null
-    away_team?: Team | null
-    odds?: Odds | null
-  }
+export type AugmentedGame = Game & {
+  home_team?: Team | null
+  away_team?: Team | null
+  odds?: Odds | null
 }
 
+type Props = { game: AugmentedGame }
+
 export default function GameCard({ game }: Props) {
-  const home = (game as any).home_team as Team | undefined
-  const away = (game as any).away_team as Team | undefined
-  const odds = (game as any).odds as Odds | undefined
+  const home = game.home_team ?? undefined
+  const away = game.away_team ?? undefined
+  const odds = game.odds ?? undefined
 
   const dt = game.kickoff_utc ? new Date(game.kickoff_utc) : null
   const formatter = new Intl.DateTimeFormat("en-US", {

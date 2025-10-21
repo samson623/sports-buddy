@@ -23,8 +23,8 @@ export default function LoginPage() {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
       if (signInError) throw signInError
       router.replace("/dashboard")
-    } catch (err: any) {
-      setError(err?.message ?? "Failed to log in")
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to log in')
     } finally {
       setLoading(false)
     }
@@ -36,8 +36,8 @@ export default function LoginPage() {
     try {
       const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/dashboard` : undefined
       await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo } })
-    } catch (err: any) {
-      setError(err?.message ?? "Google sign-in failed")
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Google sign-in failed')
       setLoading(false)
     }
   }
