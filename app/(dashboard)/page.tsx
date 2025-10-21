@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import PullToRefresh from "react-pull-to-refresh"
+import dynamic from "next/dynamic"
+const PullToRefresh = dynamic(() => import("react-pull-to-refresh"), { ssr: false })
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import GameCard, { type AugmentedGame } from "@/components/GameCard"

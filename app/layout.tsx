@@ -6,7 +6,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Sidebar from "@/components/desktop/Sidebar";
 import BottomNav from "@/components/mobile/BottomNav";
-import { Toaster } from "sonner";
+import dynamic from "next/dynamic";
+const Toaster = dynamic(() => import("sonner").then(m => m.Toaster), { ssr: false })
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
