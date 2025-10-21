@@ -1,7 +1,11 @@
 import OpenAI from 'openai'
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions'
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+function getClient(): OpenAI | null {
+  const key = process.env.OPENAI_API_KEY
+  if (!key) return null
+  return new OpenAI({ apiKey: key })
+}
 
 export type AskOptions = {
   question: string
@@ -17,6 +21,10 @@ export async function askLLM({ question, maxTokens, system, context }: AskOption
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 10_000)
   try {
+    const client = getClient()
+    if (!client) {
+      return { answer: 'AI is unavailable (missing OPENAI_API_KEY).', inputTokens: 0, outputTokens: 0 }
+    }
     const messages: ChatCompletionMessageParam[] = [
       { role: 'system', content: system || 'You are an NFL expert. Answer concisely.' },
     ]
