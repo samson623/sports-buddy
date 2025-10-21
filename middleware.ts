@@ -49,8 +49,23 @@ export async function middleware(request: NextRequest) {
   const isPublicPrefix = PUBLIC_PREFIXES.some((p) => path.startsWith(p))
   const isProtected = PROTECTED_PREFIXES.length ? PROTECTED_PREFIXES.some((p) => path.startsWith(p)) : true
 
-  // Allow OAuth callback to complete (Supabase appends `code` and `state`)
+  // Allow OAuth callback to complete (Supabase appends `code` and `state`).
   const isOAuthCallback = url.searchParams.has('code') && url.searchParams.has('state')
+
+  // If any protected route is hit with OAuth params, normalize to /auth/callback
+  // so the client page can exchange the code for a session before continuing.
+  if (isOAuthCallback && !path.startsWith('/auth/callback')) {
+    const callbackUrl = new URL('/auth/callback', request.url)
+    // Preserve all query params from provider (code, state, etc.)
+    for (const [k, v] of url.searchParams.entries()) {
+      callbackUrl.searchParams.set(k, v)
+    }
+    // Set intended post-auth destination if not present
+    if (!callbackUrl.searchParams.has('redirect')) {
+      callbackUrl.searchParams.set('redirect', path || '/')
+    }
+    return NextResponse.redirect(callbackUrl)
+  }
 
   if (!user && isProtected && !isPublicExplicit && !isPublicPrefix && !isOAuthCallback) {
     const loginUrl = new URL('/login', request.url)
