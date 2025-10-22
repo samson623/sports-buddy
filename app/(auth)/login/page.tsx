@@ -50,10 +50,12 @@ export default function LoginPage() {
     try {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
       if (signInError) throw signInError
-      router.replace("/")
+      
+      // Wait a moment for session to be established, then redirect
+      await new Promise(resolve => setTimeout(resolve, 500))
+      router.replace("/dashboard")
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to log in')
-    } finally {
       setLoading(false)
     }
   }
