@@ -19,18 +19,29 @@ export default function LoginPage() {
   React.useEffect(() => {
     let active = true
     const to = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('redirect') || '/') : '/'
+    
+    // Only check for existing session on mount
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return
-      if (data.session) router.replace(to)
+      if (data.session) {
+        router.replace(to)
+      }
     })
+    
+    // Listen for authentication state changes (like after OAuth callback)
     const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
-      if (sess) router.replace(to)
+      if (!active) return
+      // Only redirect if we just signed in via OAuth (not on every state change)
+      if (event === 'SIGNED_IN' && sess) {
+        router.replace(to)
+      }
     })
+    
     return () => {
       active = false
-      sub.subscription.unsubscribe()
+      sub?.subscription.unsubscribe()
     }
-  }, [router, supabase])
+  }, [supabase, router])
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()

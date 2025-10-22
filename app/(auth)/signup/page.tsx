@@ -15,6 +15,34 @@ export default function SignupPage() {
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
+  // If we already have a session (e.g., after Google OAuth redirect), go to dashboard
+  React.useEffect(() => {
+    let active = true
+    const redirect = '/dashboard'
+    
+    // Only check for existing session on mount
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return
+      if (data.session) {
+        router.replace(redirect)
+      }
+    })
+    
+    // Listen for authentication state changes (like after OAuth callback)
+    const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
+      if (!active) return
+      // Only redirect if we just signed in via OAuth (not on every state change)
+      if (event === 'SIGNED_IN' && sess) {
+        router.replace(redirect)
+      }
+    })
+    
+    return () => {
+      active = false
+      sub?.subscription.unsubscribe()
+    }
+  }, [supabase, router])
+
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
