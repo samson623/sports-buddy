@@ -25,7 +25,7 @@ export default function InstallPrompt() {
     if (!deferredPrompt) return;
     await deferredPrompt.prompt();
     try {
-      const choice = await deferredPrompt.userChoice;
+      await deferredPrompt.userChoice;
       // Hide after user choice
       setVisible(false);
       setDeferredPrompt(null);
