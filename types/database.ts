@@ -19,6 +19,8 @@ export type Database = {
           stripe_subscription_id: string | null
           qna_quota_used: number
           qna_quota_reset_at: string
+          weekly_analysis_used: number
+          weekly_analysis_reset_at: string
           created_at: string
           updated_at: string
         }
@@ -31,6 +33,8 @@ export type Database = {
           stripe_subscription_id?: string | null
           qna_quota_used?: number
           qna_quota_reset_at?: string
+          weekly_analysis_used?: number
+          weekly_analysis_reset_at?: string
           created_at?: string
           updated_at?: string
         }
@@ -43,6 +47,8 @@ export type Database = {
           stripe_subscription_id?: string | null
           qna_quota_used?: number
           qna_quota_reset_at?: string
+          weekly_analysis_used?: number
+          weekly_analysis_reset_at?: string
           created_at?: string
           updated_at?: string
         }
