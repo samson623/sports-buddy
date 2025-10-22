@@ -15,17 +15,19 @@ export default async function TeamsPage() {
 
   // Group teams by conference
   const teamsByConference = (teams || []).reduce(
-    (acc, team) => {
-      if (!acc[team.conference]) {
-        acc[team.conference] = {}
+    (acc: Record<string, Record<string, typeof teams>>, team) => {
+      const conference = team.conference || 'Unassigned'
+      const division = team.division || 'Unassigned'
+      if (!acc[conference]) {
+        acc[conference] = {}
       }
-      if (!acc[team.conference][team.division]) {
-        acc[team.conference][team.division] = []
+      if (!acc[conference][division]) {
+        acc[conference][division] = []
       }
-      acc[team.conference][team.division].push(team)
+      acc[conference][division]?.push(team)
       return acc
     },
-    {} as Record<string, Record<string, typeof teams>>
+    {}
   )
 
   return (
@@ -40,7 +42,7 @@ export default async function TeamsPage() {
               <div key={`${conference}-${division}`}>
                 <h3 className="text-lg font-medium mb-4 text-muted-foreground">{division} Division</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {divisionTeams.map((team) => (
+                  {(divisionTeams || []).map((team) => (
                     <div
                       key={team.id}
                       className="rounded-lg border p-4 hover:bg-accent transition-colors cursor-pointer"

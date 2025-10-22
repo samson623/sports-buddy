@@ -150,8 +150,8 @@ export async function POST(request: NextRequest) {
       .single()
 
     // Construct prompt
-    const homeTeam = (game as Record<string, unknown>).home_team
-    const awayTeam = (game as Record<string, unknown>).away_team
+    const homeTeam = (game as Record<string, unknown>).home_team as Record<string, unknown> | undefined
+    const awayTeam = (game as Record<string, unknown>).away_team as Record<string, unknown> | undefined
 
     const injuryContext = injuries
       ?.map(
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
       ? `Spread: ${odds.spread}, Moneyline Home: ${odds.moneyline_home}, Moneyline Away: ${odds.moneyline_away}, Total: ${odds.total}`
       : 'No odds available'
 
-    const prompt = `You are an expert NFL analyst. Write a compelling 300-word pre-game analysis for ${homeTeam?.full_name} (${homeTeam?.abbreviation}) vs ${awayTeam?.full_name} (${awayTeam?.abbreviation}), Week ${game.week}, Season ${game.season}.
+    const prompt = `You are an expert NFL analyst. Write a compelling 300-word pre-game analysis for ${homeTeam?.full_name as string} (${homeTeam?.abbreviation as string}) vs ${awayTeam?.full_name as string} (${awayTeam?.abbreviation as string}), Week ${game.week}, Season ${game.season}.
 
 Injuries:
 ${injuryContext}
@@ -181,13 +181,10 @@ Focus your analysis on:
 Keep the tone professional yet engaging. Make it compelling for sports fans.`
 
     // Call OpenAI GPT-4o mini (using Vercel AI SDK)
-    const { text, usage } = await generateText({
-      model: openai('gpt-4o-mini', {
-        structuredOutputs: false,
-      }),
+    const { text } = await generateText({
+      model: openai('gpt-4o-mini'),
       prompt,
       temperature: 0.7,
-      maxTokens: 500,
     })
 
     const analysis = text
@@ -199,7 +196,7 @@ Keep the tone professional yet engaging. Make it compelling for sports fans.`
         game_id: gameId,
         content: analysis,
         generated_at: new Date().toISOString(),
-        token_count: usage?.completionTokens || 0,
+        token_count: 0,
       })
 
     if (insertError) {
@@ -219,7 +216,7 @@ Keep the tone professional yet engaging. Make it compelling for sports fans.`
     return NextResponse.json(
       {
         analysis,
-        tokenCount: usage?.completionTokens || 0,
+        tokenCount: 0,
         cached: false,
       },
       { status: 200 }

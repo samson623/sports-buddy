@@ -64,8 +64,8 @@ export default async function TeamPage({ params }: PageParams) {
     .select(
       `
       *,
-      home_team:home_team_id(id, full_name, abbreviation, logo_url),
-      away_team:away_team_id(id, full_name, abbreviation, logo_url)
+      home_team:teams!games_home_team_id_fkey(*),
+      away_team:teams!games_away_team_id_fkey(*)
     `
     )
     .or(`home_team_id.eq.${team.id},away_team_id.eq.${team.id}`)
@@ -74,10 +74,13 @@ export default async function TeamPage({ params }: PageParams) {
     .limit(3)
 
   // Fetch injuries
-  const { data: injuries } = await supabase
-    .from('injuries')
-    .select(`*, player:player_id(*)`)
-    .eq('player_id', players?.map((p) => p.id) || [])
+  const playerIds = players?.map((p) => p.id) || []
+  const { data: injuries } = playerIds.length > 0
+    ? await supabase
+        .from('injuries')
+        .select(`*, player:player_id(*)`)
+        .in('player_id', playerIds)
+    : { data: [] }
 
   // Group and count stats
   const activePlayersCount =
