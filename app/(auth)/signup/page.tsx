@@ -48,21 +48,22 @@ export default function SignupPage() {
     setLoading(true)
     setError(null)
     try {
-      const { error: signupError } = await supabase.auth.signUp({ email, password })
+      const { error: signupError, data } = await supabase.auth.signUp({ email, password })
       if (signupError) throw signupError
 
-      const { data: userData } = await supabase.auth.getUser()
-      const userId = userData.user?.id
-
-      if (userId) {
-        // Ensure a user profile exists; trigger may already create this.
-        await supabase
-          .from("user_profiles")
-          .upsert({ id: userId }, { onConflict: "id" })
+      if (!data.user) {
+        throw new Error("Sign up failed: no user created")
       }
 
-      // Wait a moment for session to be established, then redirect
-      await new Promise(resolve => setTimeout(resolve, 500))
+      const userId = data.user.id
+
+      // Ensure a user profile exists; trigger may already create this.
+      await supabase
+        .from("user_profiles")
+        .upsert({ id: userId }, { onConflict: "id" })
+
+      // Wait for session to be fully established, then redirect
+      await new Promise(resolve => setTimeout(resolve, 1000))
       router.replace("/dashboard")
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to sign up')

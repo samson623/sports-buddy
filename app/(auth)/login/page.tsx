@@ -48,11 +48,16 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      const { error: signInError, data } = await supabase.auth.signInWithPassword({ email, password })
       if (signInError) throw signInError
       
-      // Wait a moment for session to be established, then redirect
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Verify session was created
+      if (!data.session) {
+        throw new Error("No session created after sign in")
+      }
+      
+      // Wait for session to be fully established, then redirect
+      await new Promise(resolve => setTimeout(resolve, 1000))
       router.replace("/dashboard")
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to log in')
