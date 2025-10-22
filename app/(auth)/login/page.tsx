@@ -15,17 +15,59 @@ export default function LoginPage() {
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
+  // If we already have a session (e.g., after Google OAuth redirect), go to target
+  React.useEffect(() => {
+    let active = true
+    const to = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('redirect') || '/') : '/'
+    
+    // Only check for existing session on mount
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return
+      if (data.session) {
+        router.replace(to)
+      }
+    })
+    
+    // Listen for authentication state changes (like after OAuth callback)
+    const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
+      if (!active) return
+      // Only redirect if we just signed in via OAuth (not on every state change)
+      if (event === 'SIGNED_IN' && sess) {
+        router.replace(to)
+      }
+    })
+    
+    return () => {
+      active = false
+      sub?.subscription.unsubscribe()
+    }
+  }, [supabase, router])
+
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    
+    // Validate inputs
+    if (!email || !password) {
+      setError("Email and password are required")
+      return
+    }
+    
     setLoading(true)
     setError(null)
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      const { error: signInError, data } = await supabase.auth.signInWithPassword({ email, password })
       if (signInError) throw signInError
+      
+      // Verify session was created
+      if (!data.session) {
+        throw new Error("No session created after sign in")
+      }
+      
+      // Wait for session to be fully established, then redirect
+      await new Promise(resolve => setTimeout(resolve, 1000))
       router.replace("/dashboard")
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to log in')
-    } finally {
       setLoading(false)
     }
   }
@@ -34,8 +76,16 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     try {
-      const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/dashboard` : undefined
-      await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo } })
+      const redirect = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('redirect') || '/') : '/'
+      const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}` : undefined
+      const { error } = await supabase.auth.signInWithOAuth({ 
+        provider: "google", 
+        options: { 
+          redirectTo,
+          skipBrowserRedirect: false
+        } 
+      })
+      if (error) throw error
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Google sign-in failed')
       setLoading(false)

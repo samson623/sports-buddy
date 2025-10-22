@@ -3,22 +3,25 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Menu } from "lucide-react"
+import ThemeToggle from "@/components/ThemeToggle"
+import { Button } from "@/components/ui/button"
 
 export function Header() {
   const [open, setOpen] = useState(false)
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-md bg-white/70 border-b">
+    <header className="sticky top-0 z-40 backdrop-blur-md bg-background/70 border-b">
       <div className="mx-auto max-w-7xl px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link href="/" className="font-semibold">Sports Buddy</Link>
-          <nav className="hidden md:flex items-center gap-4 text-sm text-gray-700">
-            <Link href="/dashboard" className="hover:text-black">Schedule</Link>
-            <Link href="/teams" className="hover:text-black">Teams</Link>
-            <Link href="/pricing" className="hover:text-black">Pricing</Link>
+          <nav className="hidden md:flex items-center gap-4 text-sm text-muted-foreground">
+            <Link href="/" className="hover:text-foreground">Schedule</Link>
+            <Link href="/teams" className="hover:text-foreground">Teams</Link>
+            <Link href="/pricing" className="hover:text-foreground">Pricing</Link>
           </nav>
         </div>
-        <div className="hidden lg:flex items-center">
-          <Link href="/profile" className="text-sm">Account</Link>
+        <div className="hidden lg:flex items-center gap-3">
+          <ThemeToggle />
+          <Link href="/login"><Button variant="outline" size="sm">Sign in</Button></Link>
         </div>
         <button className="md:hidden p-2" onClick={() => setOpen((v) => !v)} aria-label="Menu">
           <Menu className="h-5 w-5" />
@@ -27,9 +30,10 @@ export function Header() {
       {open && (
         <nav className="md:hidden border-t">
           <div className="px-4 py-2 flex flex-col">
-            <Link href="/dashboard" className="py-2">Schedule</Link>
+            <Link href="/" className="py-2">Schedule</Link>
             <Link href="/teams" className="py-2">Teams</Link>
             <Link href="/pricing" className="py-2">Pricing</Link>
+            <Link href="/login" className="py-2">Sign in</Link>
           </div>
         </nav>
       )}

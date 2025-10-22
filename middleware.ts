@@ -2,9 +2,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { Database } from '@/types/database'
 
-const PUBLIC_PATHS = ['/', '/pricing']
-const PUBLIC_PREFIXES = ['/games/', '/teams/', '/legal/', '/login', '/signup', '/forgot-password']
-const PROTECTED_PREFIXES = ['/dashboard', '/profile', '/admin']
+const PUBLIC_PATHS = ['/login', '/signup', '/forgot-password']
+const PUBLIC_PREFIXES = ['/legal/', '/auth/', '/_next', '/favicon', '/images', '/api/public']
+const PROTECTED_PREFIXES: string[] = [] // protect everything that isn't explicitly public
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -47,9 +47,28 @@ export async function middleware(request: NextRequest) {
 
   const isPublicExplicit = PUBLIC_PATHS.includes(path)
   const isPublicPrefix = PUBLIC_PREFIXES.some((p) => path.startsWith(p))
-  const isProtected = PROTECTED_PREFIXES.some((p) => path.startsWith(p))
+  const REQUIRE_AUTH = process.env.NEXT_PUBLIC_REQUIRE_AUTH === 'true'
+  const isProtected = REQUIRE_AUTH && (PROTECTED_PREFIXES.length ? PROTECTED_PREFIXES.some((p) => path.startsWith(p)) : true)
 
-  if (!user && isProtected) {
+  // Allow OAuth callback to complete (Supabase appends `code` and `state`).
+  const isOAuthCallback = url.searchParams.has('code') && url.searchParams.has('state')
+
+  // If any protected route is hit with OAuth params, normalize to /auth/callback
+  // so the client page can exchange the code for a session before continuing.
+  if (isOAuthCallback && !path.startsWith('/auth/callback')) {
+    const callbackUrl = new URL('/auth/callback', request.url)
+    // Preserve all query params from provider (code, state, etc.)
+    for (const [k, v] of url.searchParams.entries()) {
+      callbackUrl.searchParams.set(k, v)
+    }
+    // Set intended post-auth destination if not present
+    if (!callbackUrl.searchParams.has('redirect')) {
+      callbackUrl.searchParams.set('redirect', path || '/')
+    }
+    return NextResponse.redirect(callbackUrl)
+  }
+
+  if (!user && isProtected && !isPublicExplicit && !isPublicPrefix && !isOAuthCallback) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', path)
     return NextResponse.redirect(loginUrl)
