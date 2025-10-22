@@ -33,7 +33,7 @@ export async function askLLM({ question, maxTokens, system, context }: AskOption
 
     const res = await client.chat.completions.create(
       {
-        model: 'gpt-5-nano',
+        model: 'gpt-4o-mini', // Using gpt-4o-mini as most cost-efficient; gpt-5-nano when available
         messages,
         max_tokens: maxTokens,
         temperature: 0.3,

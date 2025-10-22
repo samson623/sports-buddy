@@ -1,26 +1,88 @@
-export type RateLimitResult = { allowed: true } | { allowed: false; retryAfterMs: number }
+/**
+ * Simple in-memory rate limiting (3 questions per minute per user)
+ * For production, consider Redis or a database solution
+ */
 
-// Simple in-memory sliding window limiter: 3 requests / 60s per key
-const WINDOW_MS = 60_000
-const LIMIT = 3
-const bucket = new Map<string, number[]>()
+type RateLimitEntry = {
+  count: number
+  resetAt: number
+}
 
-export function rateLimitConsume(key: string): RateLimitResult {
+const store = new Map<string, RateLimitEntry>()
+
+const WINDOW_MS = 60 * 1000 // 1 minute
+const MAX_REQUESTS = 3
+
+/**
+ * Check if user has exceeded rate limit
+ * @param userId User ID from Supabase auth
+ * @returns true if allowed, false if rate limited
+ */
+export function checkRateLimit(userId: string): boolean {
   const now = Date.now()
-  const since = now - WINDOW_MS
-  const arr = (bucket.get(key) || []).filter((t) => t > since)
-  if (arr.length >= LIMIT) {
-    const retryAfterMs = Math.max(0, arr[0] + WINDOW_MS - now)
-    bucket.set(key, arr)
-    return { allowed: false, retryAfterMs }
+  const entry = store.get(userId)
+
+  if (!entry) {
+    // First request, create new entry
+    store.set(userId, { count: 1, resetAt: now + WINDOW_MS })
+    return true
   }
-  arr.push(now)
-  bucket.set(key, arr)
-  return { allowed: true }
+
+  if (now > entry.resetAt) {
+    // Window expired, reset
+    store.set(userId, { count: 1, resetAt: now + WINDOW_MS })
+    return true
+  }
+
+  // Window still active
+  if (entry.count < MAX_REQUESTS) {
+    entry.count++
+    return true
+  }
+
+  // Rate limited
+  return false
 }
 
-export function rateLimitKeyFrom(request: Request, userId?: string | null) {
-  const xfwd = request.headers.get('x-forwarded-for') || ''
-  const ip = xfwd.split(',')[0].trim() || 'local'
-  return userId ? `u:${userId}` : `ip:${ip}`
+/**
+ * Get remaining requests for a user
+ */
+export function getRemainingRequests(userId: string): number {
+  const now = Date.now()
+  const entry = store.get(userId)
+
+  if (!entry) return MAX_REQUESTS
+
+  if (now > entry.resetAt) return MAX_REQUESTS
+
+  return Math.max(0, MAX_REQUESTS - entry.count)
 }
+
+/**
+ * Get time until rate limit resets (in seconds)
+ */
+export function getResetTime(userId: string): number {
+  const now = Date.now()
+  const entry = store.get(userId)
+
+  if (!entry) return 0
+
+  if (now > entry.resetAt) return 0
+
+  return Math.ceil((entry.resetAt - now) / 1000)
+}
+
+/**
+ * Clean up old entries (call periodically to prevent memory leak)
+ */
+export function cleanupExpiredEntries(): void {
+  const now = Date.now()
+  for (const [userId, entry] of store.entries()) {
+    if (now > entry.resetAt) {
+      store.delete(userId)
+    }
+  }
+}
+
+// Cleanup every 5 minutes
+setInterval(cleanupExpiredEntries, 5 * 60 * 1000)
