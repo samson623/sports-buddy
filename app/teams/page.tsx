@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
 export default async function TeamsPage() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: teams, error } = await supabase
     .from("teams")
     .select("id, full_name, city, abbreviation, conference, division")
