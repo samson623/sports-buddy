@@ -45,6 +45,13 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    
+    // Validate inputs
+    if (!email || !password) {
+      setError("Email and password are required")
+      return
+    }
+    
     setLoading(true)
     setError(null)
     try {
