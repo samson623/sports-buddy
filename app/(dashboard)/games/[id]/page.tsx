@@ -7,6 +7,7 @@ import InjuryList from "@/components/InjuryList"
 import OddsDisplay from "@/components/OddsDisplay"
 import MobileGameTabs from "@/components/MobileGameTabs"
 import { Card } from "@/components/ui/card"
+import { AIAnalysisDisplay } from "@/components/AIAnalysisDisplay"
 
 type PageParams = {
   params: Promise<{ id: string }>
