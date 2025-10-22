@@ -1,148 +1,187 @@
+import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import type { Database } from "@/types/database"
 import GameHeader from "@/components/GameHeader"
 import RosterTable from "@/components/RosterTable"
 import InjuryList from "@/components/InjuryList"
 import OddsDisplay from "@/components/OddsDisplay"
 import MobileGameTabs from "@/components/MobileGameTabs"
 import { Card } from "@/components/ui/card"
-import { Game, Player, Team, Injury, Odds, AIAnalysis } from "@/types/database"
 
-type Params = { params: { id: string } }
+type PageParams = {
+  params: Promise<{ id: string }>
+}
 
-type PlayerWithDepth = Player & { depth_chart?: { position: string; rank: number }[] }
-type InjuryWithPlayer = Injury & { player: Player | null }
-
-export default async function GamePage({ params }: Params) {
+export default async function GameDetailPage({ params }: PageParams) {
+  const { id } = await params
   const supabase = await createClient()
-  const gameId = params.id
 
-  const { data: gameData, error } = await supabase
+  // Fetch game with team relationships
+  const { data: gameData, error: gameError } = await supabase
     .from("games")
     .select(
-      `*,
-       home_team:teams!games_home_team_id_fkey(*),
-       away_team:teams!games_away_team_id_fkey(*),
-       injuries:injuries(*, player:players(*)),
-       odds:odds(*),
-       ai_analyses:ai_analyses(*)`
+      `
+      *,
+      home_team:teams!games_home_team_id_fkey(*),
+      away_team:teams!games_away_team_id_fkey(*)
+    `
     )
-    .eq("id", gameId)
-    .single<
-      Game & {
-        home_team: Team | null
-        away_team: Team | null
-        injuries: (Injury & { player: Player | null })[]
-        odds: Odds[]
-        ai_analyses: AIAnalysis[]
-      }
-    >()
+    .eq("id", id)
+    .maybeSingle()
 
-  if (error || !gameData) {
-    return (
-      <div className="p-6">
-        <div className="text-sm text-red-600">Failed to load game.</div>
-      </div>
-    )
+  if (gameError || !gameData) notFound()
+
+  const game = gameData as Database["public"]["Tables"]["games"]["Row"] & {
+    home_team: Database["public"]["Tables"]["teams"]["Row"] | null
+    away_team: Database["public"]["Tables"]["teams"]["Row"] | null
   }
 
-  const homeId = gameData.home_team?.id ?? null
-  const awayId = gameData.away_team?.id ?? null
-
-  let homePlayers: PlayerWithDepth[] = []
-  let awayPlayers: PlayerWithDepth[] = []
-  if (homeId) {
-    const { data } = await supabase
+  // Fetch players for both teams with depth chart
+  const [homePlayersRes, awayPlayersRes] = await Promise.all([
+    supabase
       .from("players")
-      .select("id, first_name, last_name, position, jersey_number, status, depth_chart(position, rank)")
-      .eq("team_id", homeId)
-      .order("last_name", { ascending: true })
-    homePlayers = (data ?? []) as unknown as PlayerWithDepth[]
-  }
-  if (awayId) {
-    const { data } = await supabase
+      .select("*, depth_chart(*)")
+      .eq("team_id", game.home_team_id || "")
+      .order("last_name"),
+    supabase
       .from("players")
-      .select("id, first_name, last_name, position, jersey_number, status, depth_chart(position, rank)")
-      .eq("team_id", awayId)
-      .order("last_name", { ascending: true })
-    awayPlayers = (data ?? []) as unknown as PlayerWithDepth[]
-  }
+      .select("*, depth_chart(*)")
+      .eq("team_id", game.away_team_id || "")
+      .order("last_name"),
+  ])
+
+  const homePlayers = (homePlayersRes.data || []) as (Database["public"]["Tables"]["players"]["Row"] & {
+    depth_chart: Database["public"]["Tables"]["depth_chart"]["Row"][]
+  })[]
+  const awayPlayers = (awayPlayersRes.data || []) as (Database["public"]["Tables"]["players"]["Row"] & {
+    depth_chart: Database["public"]["Tables"]["depth_chart"]["Row"][]
+  })[]
+
+  // Fetch injuries for this game
+  const { data: injuriesData } = await supabase
+    .from("injuries")
+    .select("*, player:players(*)")
+    .eq("game_id", id)
+
+  const injuries = (injuriesData || []) as (Database["public"]["Tables"]["injuries"]["Row"] & {
+    player: Database["public"]["Tables"]["players"]["Row"] | null
+  })[]
+
+  // Fetch odds for this game
+  const { data: oddsData } = await supabase
+    .from("odds")
+    .select("*")
+    .eq("game_id", id)
+    .order("retrieved_at", { ascending: false })
+
+  const odds = (oddsData || []) as Database["public"]["Tables"]["odds"]["Row"][]
+
+  // Fetch AI analysis if available (premium feature)
+  const { data: aiAnalysisData } = await supabase
+    .from("ai_analyses")
+    .select("*")
+    .eq("game_id", id)
+    .maybeSingle()
 
   const overview = (
     <div className="space-y-4">
-      <GameHeader game={gameData} homeTeam={gameData.home_team} awayTeam={gameData.away_team} />
-      {gameData.ai_analyses && gameData.ai_analyses.length > 0 ? (
+      <Card className="p-4">
+        <h3 className="mb-2 font-semibold">Game Info</h3>
+        <div className="grid gap-2 text-sm">
+          <div>
+            <span className="text-muted-foreground">Season:</span> Week {game.week}, {game.season}
+          </div>
+          <div>
+            <span className="text-muted-foreground">Venue:</span> {game.venue || "TBD"}
+          </div>
+          <div>
+            <span className="text-muted-foreground">Kickoff:</span>{" "}
+            {game.kickoff_utc ? new Date(game.kickoff_utc).toLocaleString() : "TBD"}
+          </div>
+        </div>
+      </Card>
+
+      {aiAnalysisData && (
         <Card className="p-4">
-          <div className="mb-2 text-sm font-semibold">AI Analysis</div>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
-            {gameData.ai_analyses[0].content}
-          </p>
+          <h3 className="mb-2 font-semibold">AI Analysis</h3>
+          <p className="whitespace-pre-wrap text-sm text-muted-foreground">{aiAnalysisData.content}</p>
+          <div className="mt-2 text-xs text-muted-foreground">
+            Generated: {new Date(aiAnalysisData.created_at).toLocaleString()}
+          </div>
         </Card>
-      ) : (
-        <Card className="p-4 text-sm text-muted-foreground">AI analysis unavailable for your tier.</Card>
       )}
     </div>
   )
 
   const rosters = (
     <RosterTable
-      homeTeam={gameData.home_team}
-      awayTeam={gameData.away_team}
+      homeTeam={game.home_team}
+      awayTeam={game.away_team}
       homePlayers={homePlayers}
       awayPlayers={awayPlayers}
     />
   )
 
-  const injuries = (
-    <InjuryList homeTeam={gameData.home_team} awayTeam={gameData.away_team} injuries={gameData.injuries as InjuryWithPlayer[]} />
-  )
+  const injuriesList = <InjuryList homeTeam={game.home_team} awayTeam={game.away_team} injuries={injuries} />
 
-  const odds = <OddsDisplay odds={gameData.odds} />
+  const oddsList = <OddsDisplay odds={odds} />
 
   return (
-    <div className="px-4 py-6">
-      {/* Mobile (<768px): swipeable tabs */}
-      <div className="md:hidden">
-        <MobileGameTabs overview={overview} rosters={rosters} injuries={injuries} odds={odds} />
+    <div className="min-h-screen bg-background">
+      {/* Header - always visible */}
+      <div className="border-b bg-card p-4">
+        <GameHeader game={game} homeTeam={game.home_team} awayTeam={game.away_team} />
       </div>
 
-      {/* Desktop (>=1024px): three columns */}
-      <div className="hidden lg:grid lg:grid-cols-12 lg:gap-6">
-        <nav className="lg:col-span-2">
-          <ul className="sticky top-16 space-y-2 text-sm">
-            <li>
-              <a href="#overview" className="text-foreground hover:underline">
-                Overview
-              </a>
-            </li>
-            <li>
-              <a href="#rosters" className="text-foreground hover:underline">
-                Rosters
-              </a>
-            </li>
-            <li>
-              <a href="#injuries" className="text-foreground hover:underline">
-                Injuries
-              </a>
-            </li>
-            <li>
-              <a href="#odds" className="text-foreground hover:underline">
-                Odds
-              </a>
-            </li>
-          </ul>
-        </nav>
-        <main className="lg:col-span-7 space-y-8">
-          <section id="overview">{overview}</section>
-          <section id="rosters">{rosters}</section>
-          <section id="injuries">{injuries}</section>
-          <section id="odds">{odds}</section>
-        </main>
-        <aside className="lg:col-span-3">
-          <Card className="sticky top-16 p-4">
-            <div className="mb-2 text-sm font-semibold">Q&A</div>
-            <p className="text-sm text-muted-foreground">Ask about this game (coming soon).</p>
+      {/* Mobile layout - vertical stack with tabs */}
+      <div className="md:hidden">
+        <div className="p-4">
+          <MobileGameTabs overview={overview} rosters={rosters} injuries={injuriesList} odds={oddsList} />
+        </div>
+      </div>
+
+      {/* Desktop layout - three columns */}
+      <div className="hidden md:grid md:grid-cols-3 md:gap-4 md:p-4 lg:grid-cols-4">
+        {/* Main content - 2 columns on desktop, 3 on lg */}
+        <div className="md:col-span-2 lg:col-span-2 space-y-4">
+          <Card className="p-4">
+            <h2 className="mb-3 text-lg font-semibold">Overview</h2>
+            {overview}
           </Card>
-        </aside>
+
+          <Card className="p-4">
+            <h2 className="mb-3 text-lg font-semibold">Rosters</h2>
+            {rosters}
+          </Card>
+
+          <Card className="p-4">
+            <h2 className="mb-3 text-lg font-semibold">Injuries</h2>
+            {injuriesList}
+          </Card>
+
+          <Card className="p-4">
+            <h2 className="mb-3 text-lg font-semibold">Odds</h2>
+            {oddsList}
+          </Card>
+        </div>
+
+        {/* Right sidebar - Q&A section */}
+        <div className="md:col-span-1">
+          <Card className="sticky top-4 p-4">
+            <h3 className="mb-3 font-semibold">Ask about this game</h3>
+            <div className="space-y-2 text-xs text-muted-foreground">
+              <p>Ask AI questions about this game, teams, players, or stats.</p>
+              <div className="rounded bg-muted p-2">
+                <input
+                  type="text"
+                  placeholder="Ask a question..."
+                  className="w-full border-0 bg-background px-2 py-1 text-xs"
+                />
+              </div>
+              <div className="text-xs text-muted-foreground/60">Feature coming soon</div>
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   )
