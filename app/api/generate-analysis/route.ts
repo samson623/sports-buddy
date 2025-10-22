@@ -150,13 +150,13 @@ export async function POST(request: NextRequest) {
       .single()
 
     // Construct prompt
-    const homeTeam = (game as any).home_team
-    const awayTeam = (game as any).away_team
+    const homeTeam = (game as Record<string, unknown>).home_team
+    const awayTeam = (game as Record<string, unknown>).away_team
 
     const injuryContext = injuries
       ?.map(
-        (inj: any) =>
-          `${inj.player?.first_name} ${inj.player?.last_name} (${inj.injury_status}): ${inj.body_part}`
+        (inj: Record<string, unknown>) =>
+          `${(inj.player as Record<string, unknown>)?.first_name} ${(inj.player as Record<string, unknown>)?.last_name} (${inj.injury_status}): ${inj.body_part}`
       )
       .join('\n') || 'No reported injuries'
 

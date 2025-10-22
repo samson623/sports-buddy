@@ -5,7 +5,7 @@ import { Moon, Sun } from "lucide-react"
 import { useEffect, useState } from "react"
 
 export default function ThemeToggle() {
-  const { theme, setTheme, systemTheme, resolvedTheme } = useTheme()
+  const { setTheme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
   // Prevent hydration mismatch by only rendering after client-side hydration
