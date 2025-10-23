@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import ReactMarkdown from 'react-markdown'
+import dynamic from 'next/dynamic'
+const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false })
+import SmartImage from '@/components/SmartImage'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -122,7 +124,14 @@ export function GameDetailView({
             <CardContent className="pt-6">
               <div className="text-center">
                 {awayTeam?.logo_url && (
-                  <img src={awayTeam.logo_url} alt={awayTeam.full_name} className="h-16 w-16 mx-auto mb-4" />
+                  <SmartImage
+                    src={awayTeam.logo_url}
+                    alt={awayTeam.full_name || 'Away team logo'}
+                    width={64}
+                    height={64}
+                    className="h-16 w-16 mx-auto mb-4"
+                    sizes="(max-width: 640px) 64px, 64px"
+                  />
                 )}
                 <h2 className="text-2xl font-bold">{awayTeam?.full_name}</h2>
                 <p className="text-muted-foreground">{awayTeam?.abbreviation}</p>
@@ -138,7 +147,14 @@ export function GameDetailView({
             <CardContent className="pt-6">
               <div className="text-center">
                 {homeTeam?.logo_url && (
-                  <img src={homeTeam.logo_url} alt={homeTeam.full_name} className="h-16 w-16 mx-auto mb-4" />
+                  <SmartImage
+                    src={homeTeam.logo_url}
+                    alt={homeTeam.full_name || 'Home team logo'}
+                    width={64}
+                    height={64}
+                    className="h-16 w-16 mx-auto mb-4"
+                    sizes="(max-width: 640px) 64px, 64px"
+                  />
                 )}
                 <h2 className="text-2xl font-bold">{homeTeam?.full_name}</h2>
                 <p className="text-muted-foreground">{homeTeam?.abbreviation}</p>

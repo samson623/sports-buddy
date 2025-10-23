@@ -18,7 +18,7 @@ export async function getUserProfile(): Promise<UserProfile | null> {
   if (!user) return null
   const { data, error } = await supabase
     .from('user_profiles')
-    .select('*')
+    .select('id, display_name, favorite_team_id, tier, stripe_customer_id, stripe_subscription_id, qna_quota_used, qna_quota_reset_at, created_at, updated_at')
     .eq('id', user.id)
     .maybeSingle()
   if (error) return null
@@ -32,10 +32,23 @@ export async function requireAuth() {
 }
 
 export async function checkTier(required: UserTier | 'plus_or_pro') {
-  const profile = await getUserProfile()
-  if (!profile) return false
+  const tier = await getUserTier()
+  if (!tier) return false
   if (required === 'plus_or_pro') {
-    return profile.tier === 'plus' || profile.tier === 'pro'
+    return tier === 'plus' || tier === 'pro'
   }
-  return profile.tier === required
+  return tier === required
+}
+
+export async function getUserTier(): Promise<UserTier | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .select('tier')
+    .eq('id', user.id)
+    .maybeSingle()
+  if (error || !data) return null
+  return (data as { tier: UserTier }).tier
 }

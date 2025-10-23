@@ -1,5 +1,6 @@
 import type { Team } from '@/types/database'
 import { Trophy } from 'lucide-react'
+import SmartImage from '@/components/SmartImage'
 
 interface TeamHeaderProps {
   team: Team
@@ -11,7 +12,14 @@ export function TeamHeader({ team }: TeamHeaderProps) {
       {/* Logo */}
       <div className="flex h-24 w-24 items-center justify-center rounded-lg border-2 border-muted bg-muted/50">
         {team.logo_url ? (
-          <img src={team.logo_url} alt={team.full_name} className="h-20 w-20 object-contain" />
+          <SmartImage
+            src={team.logo_url}
+            alt={team.full_name}
+            width={80}
+            height={80}
+            className="h-20 w-20 object-contain"
+            sizes="(max-width: 640px) 80px, 80px"
+          />
         ) : (
           <Trophy className="h-12 w-12 text-muted-foreground" />
         )}

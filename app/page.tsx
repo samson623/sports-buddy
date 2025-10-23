@@ -1,4 +1,6 @@
 import NextDynamic from "next/dynamic"
+import { Suspense } from "react"
+import Loading from "@/components/Loading"
 
 export const dynamic = 'force-dynamic'
 
@@ -11,5 +13,9 @@ export default function Home() {
   if (process.env.NODE_ENV === 'test') {
     return <div>Schedule Page</div>
   }
-  return <ClientSchedule />
+  return (
+    <Suspense fallback={<Loading />}>
+      <ClientSchedule />
+    </Suspense>
+  )
 }

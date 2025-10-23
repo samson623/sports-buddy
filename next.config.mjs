@@ -37,7 +37,10 @@ const runtimeCaching = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Add any Next.js config customizations here
+  // Prefer modern image formats
+  images: {
+    formats: ['image/avif', 'image/webp'],
+  },
 };
 
 const withPWA = nextPWA({
@@ -48,4 +51,14 @@ const withPWA = nextPWA({
   runtimeCaching,
 });
 
-export default withPWA(nextConfig);
+let withBundleAnalyzer = (config) => config
+if (process.env.ANALYZE === 'true') {
+  try {
+    const mod = await import('@next/bundle-analyzer')
+    withBundleAnalyzer = mod.default({ enabled: true })
+  } catch (e) {
+    // analyzer not installed; ignore
+  }
+}
+
+export default withPWA(withBundleAnalyzer(nextConfig));

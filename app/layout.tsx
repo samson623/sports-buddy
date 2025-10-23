@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
+import QueryProvider from "@/components/QueryProvider";
+import { Suspense } from "react";
+import Loading from "@/components/Loading";
 import ThemeProvider from "@/components/ThemeProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -58,16 +61,18 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider>
           <AuthProvider>
-          <OfflineBanner />
-          <Header />
-          <Sidebar />
-          <main className="min-h-screen lg:pl-64">
-            {children}
-          </main>
-          <Footer />
-          <BottomNav />
-          <InstallPrompt />
-          <Toaster position="top-center" richColors />
+            <QueryProvider>
+              <OfflineBanner />
+              <Header />
+              <Sidebar />
+              <main className="min-h-screen lg:pl-64">
+                <Suspense fallback={<Loading />}>{children}</Suspense>
+              </main>
+              <Footer />
+              <BottomNav />
+              <InstallPrompt />
+              <Toaster position="top-center" richColors />
+            </QueryProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

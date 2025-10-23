@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import type { Database } from '@/types/database'
 import { format, isBefore, isToday } from 'date-fns'
 import { Trophy, MapPin } from 'lucide-react'
+import SmartImage from '@/components/SmartImage'
 
 interface UpcomingGamesProps {
   teamId: string
@@ -70,10 +71,13 @@ export function UpcomingGames({ teamId, games }: UpcomingGamesProps) {
                         <p className="font-semibold">vs</p>
                       </div>
                       {opponent?.logo_url && (
-                        <img
+                        <SmartImage
                           src={opponent.logo_url}
-                          alt={opponent.abbreviation}
+                          alt={opponent.abbreviation || 'Team logo'}
+                          width={32}
+                          height={32}
                           className="h-8 w-8 object-contain"
+                          sizes="(max-width: 640px) 32px, 32px"
                         />
                       )}
                       <div className="flex-1">
@@ -88,10 +92,13 @@ export function UpcomingGames({ teamId, games }: UpcomingGamesProps) {
                         <p className="text-xs text-muted-foreground">{opponent?.full_name}</p>
                       </div>
                       {opponent?.logo_url && (
-                        <img
+                        <SmartImage
                           src={opponent.logo_url}
-                          alt={opponent.abbreviation}
+                          alt={opponent.abbreviation || 'Team logo'}
+                          width={32}
+                          height={32}
                           className="h-8 w-8 object-contain"
+                          sizes="(max-width: 640px) 32px, 32px"
                         />
                       )}
                       <div className="flex-1 text-left">
