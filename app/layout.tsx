@@ -62,8 +62,8 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <QueryProvider>
-              <OfflineBanner />
               <Header />
+              <OfflineBanner />
               <Sidebar />
               <main className="min-h-screen lg:pl-64">
                 <Suspense fallback={<Loading />}>{children}</Suspense>
