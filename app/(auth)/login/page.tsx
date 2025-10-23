@@ -76,18 +76,32 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     try {
-      const redirect = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('redirect') || '/') : '/'
-      const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}` : undefined
-      const { error } = await supabase.auth.signInWithOAuth({ 
+      const redirect = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('redirect') || '/dashboard') : '/dashboard'
+      const redirectTo = `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`
+      
+      console.log('Starting Google OAuth with redirectTo:', redirectTo)
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({ 
         provider: "google", 
         options: { 
           redirectTo,
-          skipBrowserRedirect: false
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         } 
       })
+      
+      console.log('Google OAuth response:', { data, error })
+      
       if (error) throw error
+      
+      // The browser will redirect to Google OAuth, so we don't need to do anything else
+      // The loading state will remain until the redirect happens
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Google sign-in failed')
+      const errorMsg = err instanceof Error ? err.message : 'Google sign-in failed'
+      console.error('Google OAuth error:', errorMsg, err)
+      setError(errorMsg)
       setLoading(false)
     }
   }

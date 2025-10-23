@@ -5,22 +5,23 @@ import { Moon, Sun } from "lucide-react"
 import { useEffect, useState } from "react"
 
 export default function ThemeToggle() {
-  const { setTheme, resolvedTheme } = useTheme()
+  const { setTheme, theme, resolvedTheme, systemTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
   // Prevent hydration mismatch by only rendering after client-side hydration
   useEffect(() => {
     setMounted(true)
-  }, [])
+    console.log('ThemeToggle mounted, theme:', theme, 'resolvedTheme:', resolvedTheme, 'systemTheme:', systemTheme)
+  }, [theme, resolvedTheme, systemTheme])
 
-  // Handle theme toggle with proper persistence
+  // Handle theme toggle - next-themes handles persistence automatically
   const handleToggle = () => {
-    const newTheme = resolvedTheme === "dark" ? "light" : "dark"
-    setTheme(newTheme)
-    // Ensure localStorage is updated
-    if (typeof window !== "undefined") {
-      localStorage.setItem("theme", newTheme)
-      document.documentElement.classList.toggle("dark", newTheme === "dark")
+    try {
+      const newTheme = resolvedTheme === "dark" ? "light" : "dark"
+      console.log('Toggling theme from', resolvedTheme, 'to', newTheme)
+      setTheme(newTheme)
+    } catch (error) {
+      console.error('Error toggling theme:', error)
     }
   }
 

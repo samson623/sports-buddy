@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { Database } from '@/types/database'
 
-const PUBLIC_PATHS = ['/login', '/signup', '/forgot-password']
+const PUBLIC_PATHS = ['/', '/login', '/signup', '/forgot-password']
 const PUBLIC_PREFIXES = ['/legal/', '/auth/', '/_next', '/favicon', '/images', '/api/public']
 const PROTECTED_PREFIXES: string[] = [] // protect everything that isn't explicitly public
 
