@@ -9,11 +9,11 @@ type Props = {
 
 function StatusBadge({ status }: { status: Game["status"] }) {
   const map: Record<Game["status"], string> = {
-    scheduled: "bg-blue-100 text-blue-700",
-    in_progress: "bg-green-100 text-green-700",
-    completed: "bg-gray-200 text-gray-800",
-    postponed: "bg-yellow-100 text-yellow-800",
-    cancelled: "bg-red-100 text-red-700",
+    scheduled: "bg-blue-500/10 text-blue-600 dark:text-blue-300",
+    in_progress: "bg-green-500/10 text-green-600 dark:text-green-300",
+    completed: "bg-muted text-foreground",
+    postponed: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-300",
+    cancelled: "bg-red-500/10 text-red-600 dark:text-red-300",
   }
   const label: Record<Game["status"], string> = {
     scheduled: "Scheduled",
@@ -43,12 +43,12 @@ export function GameHeader({ game, homeTeam, awayTeam }: Props) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="h-10 w-10 rounded bg-gray-200" />
+            <div className="h-10 w-10 rounded bg-muted" />
             <div className="text-sm font-medium">{awayTeam?.abbreviation ?? "AWY"}</div>
           </div>
           <div className="text-xs text-muted-foreground">at</div>
           <div className="flex items-center gap-2">
-            <div className="h-10 w-10 rounded bg-gray-200" />
+            <div className="h-10 w-10 rounded bg-muted" />
             <div className="text-sm font-medium">{homeTeam?.abbreviation ?? "HOME"}</div>
           </div>
         </div>

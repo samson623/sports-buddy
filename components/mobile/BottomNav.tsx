@@ -13,7 +13,7 @@ const tabs = [
 export function BottomNav() {
   const pathname = usePathname()
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t h-16">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur border-t border-border h-16">
       <ul className="grid h-full grid-cols-3">
         {tabs.map((t) => {
           const Icon = t.icon
@@ -21,8 +21,8 @@ export function BottomNav() {
           return (
             <li key={t.href} className="flex items-center justify-center">
               <Link href={t.href} className="flex flex-col items-center gap-1 text-xs">
-                <Icon className={`h-5 w-5 ${active ? "text-blue-600" : "text-gray-500"}`} />
-                <span className={active ? "text-blue-600" : "text-gray-600"}>{t.label}</span>
+                <Icon className={`h-5 w-5 transition-colors ${active ? "text-primary" : "text-muted-foreground"}`} />
+                <span className={`transition-colors ${active ? "text-primary" : "text-muted-foreground"}`}>{t.label}</span>
               </Link>
             </li>
           )

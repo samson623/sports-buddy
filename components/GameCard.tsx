@@ -27,16 +27,16 @@ export default function GameCard({ game }: Props) {
   return (
     <Link
       href={`/games/${game.id}`}
-      className="border rounded-lg p-4 hover:shadow-lg transition min-h-[120px] flex flex-col justify-between"
+      className="border rounded-lg p-4 hover:bg-muted/60 transition min-h-[120px] flex flex-col justify-between bg-card"
     >
       <div className="font-medium">
         {away?.abbreviation ?? "AWY"} @ {home?.abbreviation ?? "HOM"}
       </div>
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-muted-foreground">
         {dt ? `${formatter.format(dt)} ET` : "TBD"}
       </div>
       {odds && (
-        <div className="text-xs text-gray-500">Spread: {odds.spread ?? "-"}</div>
+        <div className="text-xs text-muted-foreground">Spread: {odds.spread ?? "-"}</div>
       )}
     </Link>
   )

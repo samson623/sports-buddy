@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-quer
 import { createClient } from "@/lib/supabase/client"
 import GameCard, { type AugmentedGame } from "@/components/GameCard"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 
 function getCurrentNFLWeek(date = new Date()) {
   const seasonStart = new Date(date.getFullYear(), 8, 1)
@@ -29,9 +30,12 @@ function WeekSelector({ week, setWeek }: { week: number; setWeek: (w: number) =>
             <button
               key={w}
               onClick={() => setWeek(w)}
-              className={`px-3 py-1 rounded-full whitespace-nowrap text-sm border ${
-                w === week ? "bg-blue-600 text-white border-blue-600" : "bg-white"
-              }`}
+              className={cn(
+                "px-3 py-1 rounded-full whitespace-nowrap text-sm border transition-colors",
+                w === week
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-muted text-muted-foreground hover:text-foreground"
+              )}
             >
               Week {w}
             </button>
@@ -39,8 +43,12 @@ function WeekSelector({ week, setWeek }: { week: number; setWeek: (w: number) =>
         </div>
       </div>
       <div className="hidden md:block">
-        <label className="text-sm mr-2">Week</label>
-        <select className="border rounded-md px-3 py-2" value={week} onChange={(e) => setWeek(Number(e.target.value))}>
+        <label className="text-sm mr-2 text-muted-foreground">Week</label>
+        <select
+          className="border rounded-md px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+          value={week}
+          onChange={(e) => setWeek(Number(e.target.value))}
+        >
           {weeks.map((w) => (
             <option key={w} value={w}>Week {w}</option>
           ))}
@@ -76,7 +84,7 @@ function GamesGrid({ week }: { week: number }) {
         ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-[120px] w-full" />)
         : data && data.length > 0
         ? data.map((g) => <GameCard key={g.id} game={g as unknown as AugmentedGame} />)
-        : <div className="col-span-full text-center text-gray-600 py-12">No games scheduled for this week</div>}
+        : <div className="col-span-full text-center text-muted-foreground py-12">No games scheduled for this week</div>}
     </div>
   )
 

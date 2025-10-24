@@ -6,6 +6,7 @@ import { useQuery, QueryClient, QueryClientProvider, useQueryClient } from "@tan
 import PullToRefresh from "react-pull-to-refresh"
 import GameCard, { AugmentedGame } from "@/components/GameCard"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 import type { Game, Team, Odds } from "@/types/database"
 
 const WEEKS = Array.from({ length: 22 }, (_, i) => i + 1)
@@ -68,7 +69,12 @@ function WeekSelector({ week, setWeek }: { week: number; setWeek: (w: number) =>
           {WEEKS.map((w) => (
             <button
               key={w}
-              className={`px-3 py-1 rounded-full text-sm border ${w === week ? "bg-black text-white" : "bg-white"}`}
+              className={cn(
+                "px-3 py-1 rounded-full text-sm border transition-colors",
+                w === week
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-muted text-muted-foreground hover:text-foreground"
+              )}
               onClick={() => setWeek(w)}
             >
               Week {w}
@@ -80,7 +86,7 @@ function WeekSelector({ week, setWeek }: { week: number; setWeek: (w: number) =>
       <div className="hidden md:flex items-center gap-2">
         <label className="text-sm text-muted-foreground">Week</label>
         <select
-          className="border rounded px-2 py-1 text-sm"
+          className="border rounded px-2 py-1 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
           value={week}
           onChange={(e) => setWeek(Number(e.target.value))}
         >
