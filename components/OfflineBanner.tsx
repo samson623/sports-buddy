@@ -10,7 +10,7 @@ export default function OfflineBanner() {
   if (online || dismissed) return null;
 
   return (
-    <div className="fixed inset-x-0 top-0 z-50">
+    <div className="fixed inset-x-0 top-14 z-40">
       <div className="mx-auto max-w-5xl">
         <div className="m-2 rounded-md bg-yellow-100 text-yellow-900 border border-yellow-300 shadow px-4 py-2 flex items-center justify-between">
           <span className="text-sm">You&apos;re offline. Showing cached data.</span>
