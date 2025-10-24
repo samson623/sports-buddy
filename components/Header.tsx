@@ -30,6 +30,10 @@ export function Header() {
       {open && (
         <nav className="md:hidden border-t">
           <div className="px-4 py-2 flex flex-col">
+            <div className="py-2 flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Appearance</span>
+              <ThemeToggle />
+            </div>
             <Link href="/" className="py-2">Schedule</Link>
             <Link href="/teams" className="py-2">Teams</Link>
             <Link href="/pricing" className="py-2">Pricing</Link>
