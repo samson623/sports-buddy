@@ -76,8 +76,14 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     try {
+      console.log('[DEBUG] Google sign-in clicked')
+      console.log('[DEBUG] NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+      console.log('[DEBUG] NEXT_PUBLIC_SUPABASE_ANON_KEY exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+      
       const redirect = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('redirect') || '/') : '/'
       const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}` : undefined
+      console.log('[DEBUG] Redirect URL:', redirectTo)
+      
       const { error } = await supabase.auth.signInWithOAuth({ 
         provider: "google", 
         options: { 
@@ -85,9 +91,13 @@ export default function LoginPage() {
           skipBrowserRedirect: false
         } 
       })
+      console.log('[DEBUG] OAuth error:', error)
       if (error) throw error
+      console.log('[DEBUG] OAuth sign-in initiated successfully')
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Google sign-in failed')
+      const errorMsg = err instanceof Error ? err.message : 'Google sign-in failed'
+      console.error('[ERROR] Google sign-in failed:', err)
+      setError(errorMsg)
       setLoading(false)
     }
   }
