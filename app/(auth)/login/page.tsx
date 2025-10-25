@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [loading, setLoading] = React.useState(false)
+  const [googleLoading, setGoogleLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
   // If we already have a session (e.g., after Google OAuth redirect), go to target
@@ -73,22 +74,36 @@ export default function LoginPage() {
   }
 
   const handleGoogle = async () => {
-    setLoading(true)
+    setGoogleLoading(true)
     setError(null)
     try {
       const redirect = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('redirect') || '/') : '/'
       const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}` : undefined
-      const { error } = await supabase.auth.signInWithOAuth({ 
+      
+      // Show loading state immediately
+      const { data, error } = await supabase.auth.signInWithOAuth({ 
         provider: "google", 
         options: { 
           redirectTo,
-          skipBrowserRedirect: false
+          skipBrowserRedirect: false,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         } 
       })
+      
       if (error) throw error
+      
+      // If we get here without error, OAuth redirect is happening
+      // Keep loading state true as we're redirecting
+      if (data?.url) {
+        // Optional: Show a message that we're redirecting
+        setError(null) // Clear any errors
+      }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Google sign-in failed')
-      setLoading(false)
+      setError(err instanceof Error ? err.message : 'Google sign-in failed. Please check if pop-ups are enabled.')
+      setGoogleLoading(false)
     }
   }
 
@@ -137,10 +152,20 @@ export default function LoginPage() {
             </Button>
           </form>
           <div className="mt-4">
-            <Button variant="outline" className="w-full h-12 text-base" onClick={handleGoogle} disabled={loading}>
-              Continue with Google
+            <Button 
+              variant="outline" 
+              className="w-full h-12 text-base" 
+              onClick={handleGoogle} 
+              disabled={loading || googleLoading}
+            >
+              {googleLoading ? "Redirecting to Google..." : "Continue with Google"}
             </Button>
           </div>
+          {googleLoading && (
+            <p className="mt-2 text-xs text-muted-foreground text-center">
+              If a new window doesn&apos;t open, please check your popup settings.
+            </p>
+          )}
         </CardContent>
         <CardFooter className="flex-col items-start gap-2">
           <a href="/forgot-password" className="text-sm text-primary underline-offset-4 hover:underline">Forgot password?</a>
