@@ -2,12 +2,13 @@
 
 import * as React from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = React.useMemo(() => createClient(), [])
@@ -15,7 +16,6 @@ export default function LoginPage() {
   const [password, setPassword] = React.useState("")
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
-  const [sessionChecked, setSessionChecked] = React.useState(false)
 
   // Check for error from callback
   React.useEffect(() => {
@@ -37,17 +37,13 @@ export default function LoginPage() {
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        if (isMounted) {
-          if (session) {
-            // Already logged in, redirect immediately
-            router.replace(redirectTo)
-          }
-          setSessionChecked(true)
+        if (isMounted && session) {
+          // Already logged in, redirect immediately
+          router.replace(redirectTo)
         }
       } catch (err) {
         if (isMounted) {
           console.error('Session check failed:', err)
-          setSessionChecked(true)
         }
       }
     }
@@ -183,5 +179,20 @@ export default function LoginPage() {
         </CardFooter>
       </Card>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="h-12 w-12 rounded-full border-4 border-blue-600 border-t-transparent animate-spin mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    }>
+      <LoginPageContent />
+    </Suspense>
   )
 }
