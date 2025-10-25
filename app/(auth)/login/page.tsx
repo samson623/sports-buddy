@@ -1,47 +1,72 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = React.useMemo(() => createClient(), [])
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
-  // If we already have a session (e.g., after Google OAuth redirect), go to target
+  // Check for error from callback
   React.useEffect(() => {
-    let active = true
-    const to = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('redirect') || '/') : '/'
-    
-    // Only check for existing session on mount
-    supabase.auth.getSession().then(({ data }) => {
-      if (!active) return
-      if (data.session) {
-        router.replace(to)
+    const errorParam = searchParams.get('error')
+    if (errorParam) {
+      const errorMessages: Record<string, string> = {
+        oauth_error: 'OAuth sign-in failed. Please try again.',
+        callback_error: 'Authentication callback error. Please try again.',
       }
-    })
+      setError(errorMessages[errorParam] || 'An error occurred. Please try again.')
+    }
+  }, [searchParams])
+
+  // Check for existing session on mount
+  React.useEffect(() => {
+    let isMounted = true
+    const redirectTo = searchParams.get('redirect') || '/dashboard'
     
-    // Listen for authentication state changes (like after OAuth callback)
-    const { data: sub } = supabase.auth.onAuthStateChange((event, sess) => {
-      if (!active) return
-      // Only redirect if we just signed in via OAuth (not on every state change)
-      if (event === 'SIGNED_IN' && sess) {
-        router.replace(to)
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (isMounted && session) {
+          // Already logged in, redirect immediately
+          router.replace(redirectTo)
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error('Session check failed:', err)
+        }
       }
-    })
+    }
+    
+    checkSession()
+    
+    // Listen for auth state changes (e.g., after OAuth callback)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!isMounted) return
+        
+        if (event === 'SIGNED_IN' && session) {
+          // Redirect after successful sign-in
+          router.replace(redirectTo)
+        }
+      }
+    )
     
     return () => {
-      active = false
-      sub?.subscription.unsubscribe()
+      isMounted = false
+      subscription?.unsubscribe()
     }
-  }, [supabase, router])
+  }, [supabase, router, searchParams])
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -76,16 +101,20 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     try {
-      const redirect = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('redirect') || '/') : '/'
-      const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}` : undefined
+      const redirectTo = typeof window !== 'undefined' 
+        ? `${window.location.origin}/auth/callback` 
+        : undefined
+      
       const { error } = await supabase.auth.signInWithOAuth({ 
         provider: "google", 
         options: { 
           redirectTo,
-          skipBrowserRedirect: false
+          skipBrowserRedirect: false,
         } 
       })
+      
       if (error) throw error
+      // OAuth will handle redirect automatically
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Google sign-in failed')
       setLoading(false)
@@ -150,5 +179,20 @@ export default function LoginPage() {
         </CardFooter>
       </Card>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="h-12 w-12 rounded-full border-4 border-blue-600 border-t-transparent animate-spin mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    }>
+      <LoginPageContent />
+    </Suspense>
   )
 }
