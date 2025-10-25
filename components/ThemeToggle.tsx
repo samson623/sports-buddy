@@ -13,15 +13,10 @@ export default function ThemeToggle() {
     setMounted(true)
   }, [])
 
-  // Handle theme toggle with proper persistence
-  const handleToggle = () => {
-    const newTheme = resolvedTheme === "dark" ? "light" : "dark"
-    setTheme(newTheme)
-    // Ensure localStorage is updated
-    if (typeof window !== "undefined") {
-      localStorage.setItem("theme", newTheme)
-      document.documentElement.classList.toggle("dark", newTheme === "dark")
-    }
+  // Toggle via next-themes (handles storage + class application)
+  const toggleTheme = () => {
+    const nextTheme = resolvedTheme === "dark" ? "light" : "dark"
+    setTheme(nextTheme)
   }
 
   if (!mounted) {
@@ -42,7 +37,7 @@ export default function ThemeToggle() {
     <button
       aria-label="Toggle theme"
       className="inline-flex h-9 w-9 items-center justify-center rounded-md border hover:bg-accent transition-colors"
-      onClick={handleToggle}
+      onClick={toggleTheme}
       title={`Switch to ${isDark ? "light" : "dark"} mode`}
     >
       {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
