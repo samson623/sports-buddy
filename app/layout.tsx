@@ -10,6 +10,7 @@ import BottomNav from "@/components/mobile/BottomNav";
 import dynamic from "next/dynamic";
 import InstallPrompt from "@/components/InstallPrompt";
 import OfflineBanner from "@/components/OfflineBanner";
+import QnAContainer from "@/components/QnAContainer";
 const Toaster = dynamic(() => import("sonner").then(m => m.Toaster), { ssr: false })
 
 const geistSans = localFont({
@@ -70,6 +71,8 @@ export default function RootLayout({
           <Toaster position="top-center" richColors />
           </AuthProvider>
         </ThemeProvider>
+        {/* Global Q&A (desktop sidebar + mobile overlay) */}
+        <QnAContainer />
       </body>
     </html>
   );
