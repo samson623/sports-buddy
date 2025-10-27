@@ -75,18 +75,32 @@ export default function SignupPage() {
     setLoading(true)
     setError(null)
     try {
-      const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent('/dashboard')}` : undefined
-      const { error } = await supabase.auth.signInWithOAuth({ 
-        provider: "google", 
-        options: { 
+      const redirectTo = typeof window !== "undefined"
+        ? (() => {
+            const callbackUrl = new URL(`${window.location.origin}/auth/callback`)
+            const redirect = '/dashboard'
+            callbackUrl.searchParams.set('redirect', encodeURIComponent(redirect))
+            return callbackUrl.toString()
+          })()
+        : undefined
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
           redirectTo,
           skipBrowserRedirect: false
-        } 
+        }
       })
-      if (error) throw error
+      if (error) {
+        console.error('OAuth error:', error)
+        throw error
+      }
+      // OAuth will handle redirect automatically - keep loading state during transition
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Google sign-in failed')
-      setLoading(false)
+      console.error('Google sign-in error:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Google sign-in failed'
+      setError(errorMessage)
+      setLoading(false) // Reset loading only on error
     }
   }
 
